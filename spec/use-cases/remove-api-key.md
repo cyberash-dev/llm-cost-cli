@@ -2,12 +2,12 @@
 
 ## Назначение
 
-Удалить сохранённый Admin API-ключ из macOS Keychain.
+Удалить сохранённый Admin API-ключ из системного keychain.
 
 ## CLI-команда
 
 ```bash
-claude-cost config remove-key
+llm-cost config remove-key [--provider <provider>]
 ```
 
 ## Расположение
@@ -17,29 +17,33 @@ claude-cost config remove-key
 
 ## Входные параметры
 
-Нет.
+| Параметр | Тип | Источник | Описание |
+|----------|-----|----------|----------|
+| `provider` | `Provider` | `--provider` flag (default: `anthropic`) | Провайдер |
 
 ## Зависимости (порты)
 
 | Порт | Описание |
 |------|----------|
-| `CredentialStore` | Удаление credential из хранилища |
+| `CredentialStore` | Удаление credential из хранилища (выбирается по provider) |
 
 ## Алгоритм
 
 ```
-1. credentialStore.clear()
+1. Определить provider из --provider флага
+2. Выбрать CredentialStore для данного provider
+3. credentialStore.clear()
    └── KeychainCredentialStore:
-       security delete-generic-password -a claude-cost-cli -s claude-cost-cli
-2. Вывод: "API key removed."
+       deletePassword('llm-cost-cli', 'llm-cost-cli:<provider>') via cross-keychain
+4. Вывод: "API key removed for <provider>."
 ```
 
 ## Идемпотентность
 
-Если ключ уже был удалён или не существует, операция завершается без ошибки (ошибки `could not be found` / `The specified item could not be found` подавляются).
+Если ключ уже был удалён или не существует, адаптер KeychainCredentialStore перехватывает `PasswordDeleteError("Password not found")` и завершается без ошибки.
 
 ## Ошибки
 
 | Ситуация | Сообщение |
 |----------|-----------|
-| Ошибка Keychain (не "not found") | `Failed to remove credential from Keychain: <details>` |
+| Ошибка keychain | Ошибка из cross-keychain |

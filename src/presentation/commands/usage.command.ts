@@ -1,11 +1,12 @@
 import type { Command } from 'commander';
 import type { UsagePresenter } from '../../application/ports/usage-presenter.port.js';
 import { createGetUsageReportUseCase } from '../../application/use-cases/get-usage-report.use-case.js';
+import type { ProviderOption } from '../../domain/entities.js';
 import type { UsageRepository } from '../../domain/usage-repository.port.js';
 
 export function registerUsageCommand(
   program: Command,
-  usageRepository: UsageRepository,
+  getUsageRepository: (provider: ProviderOption) => UsageRepository,
   getUsagePresenter: (json: boolean) => UsagePresenter,
 ): void {
   program
@@ -21,24 +22,42 @@ export function registerUsageCommand(
       'Group by model, api_key_id, workspace_id, service_tier (comma-separated)',
     )
     .option('--bucket <width>', 'Bucket width: 1d, 1h, 1m', '1d')
+    .option(
+      '--provider <provider>',
+      'Provider: anthropic, openai, openrouter, or all',
+      'anthropic',
+    )
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
+      const providerOption = opts.provider as ProviderOption;
+      if (
+        providerOption !== 'anthropic' &&
+        providerOption !== 'openai' &&
+        providerOption !== 'openrouter' &&
+        providerOption !== 'all'
+      ) {
+        console.error(`Unknown provider: ${providerOption}`);
+        process.exit(1);
+      }
+
+      const usageRepository = getUsageRepository(providerOption);
       const usagePresenter = getUsagePresenter(Boolean(opts.json));
-      const getUsage = createGetUsageReportUseCase(
+      const getUsageReport = createGetUsageReportUseCase(
         usageRepository,
         usagePresenter,
       );
+      const models = opts.model
+        ? (opts.model as string).split(',').map((s: string) => s.trim())
+        : undefined;
+      const apiKeyIds = opts.apiKeys
+        ? (opts.apiKeys as string).split(',').map((s: string) => s.trim())
+        : undefined;
+      const groupBy = opts.groupBy
+        ? (opts.groupBy as string).split(',').map((s: string) => s.trim())
+        : ['model'];
+
       try {
-        const models = opts.model
-          ? (opts.model as string).split(',').map((s: string) => s.trim())
-          : undefined;
-        const apiKeyIds = opts.apiKeys
-          ? (opts.apiKeys as string).split(',').map((s: string) => s.trim())
-          : undefined;
-        const groupBy = opts.groupBy
-          ? (opts.groupBy as string).split(',').map((s: string) => s.trim())
-          : ['model'];
-        await getUsage({
+        await getUsageReport({
           from: opts.from,
           to: opts.to,
           period: opts.period,

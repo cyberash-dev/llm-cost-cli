@@ -3,10 +3,11 @@ import type { CredentialStore } from '../../application/ports/credential-store.p
 import { createRemoveApiKeyUseCase } from '../../application/use-cases/remove-api-key.use-case.js';
 import { createShowApiKeyUseCase } from '../../application/use-cases/show-api-key.use-case.js';
 import { createStoreApiKeyUseCase } from '../../application/use-cases/store-api-key.use-case.js';
+import type { Provider } from '../../domain/entities.js';
 
 export function registerConfigCommand(
   program: Command,
-  credentialStore: CredentialStore,
+  credentialStores: Record<Provider, CredentialStore>,
 ): void {
   const config = program
     .command('config')
@@ -14,18 +15,35 @@ export function registerConfigCommand(
 
   config
     .command('set-key')
-    .description('Store Admin API key securely in macOS Keychain')
-    .action(async () => {
+    .description('Store Admin API key securely in system keychain')
+    .option(
+      '--provider <provider>',
+      'Provider: anthropic, openai, or openrouter',
+      'anthropic',
+    )
+    .action(async (opts) => {
+      const provider = opts.provider as Provider;
+      const store = credentialStores[provider];
+      if (!store) {
+        console.error(`Unknown provider: ${provider}`);
+        process.exit(1);
+      }
       const { password } = await import('@inquirer/prompts');
-      const storeApiKey = createStoreApiKeyUseCase(credentialStore);
+      const storeApiKey = createStoreApiKeyUseCase(store);
       try {
+        const prefixMap: Record<Provider, string> = {
+          anthropic: 'sk-ant-admin...',
+          openai: 'sk-admin-..., sk-proj-..., or sk-svcacct-...',
+          openrouter: 'sk-or-... (Management API key)',
+        };
+        const prefix = prefixMap[provider];
         const key = await password({
-          message: 'Enter your Admin API key (sk-ant-admin...):',
+          message: `Enter your ${provider} Admin API key (${prefix}):`,
           mask: true,
           validate: (v) => (v.trim().length > 0 ? true : 'Key cannot be empty'),
         });
-        await storeApiKey(key);
-        console.log('API key stored successfully.');
+        await storeApiKey(key, provider);
+        console.log(`API key stored successfully for ${provider}.`);
       } catch (err) {
         console.error(err instanceof Error ? err.message : String(err));
         process.exit(1);
@@ -35,11 +53,24 @@ export function registerConfigCommand(
   config
     .command('show')
     .description('Display masked API key')
-    .action(async () => {
-      const showApiKey = createShowApiKeyUseCase(credentialStore);
+    .option(
+      '--provider <provider>',
+      'Provider: anthropic, openai, or openrouter',
+      'anthropic',
+    )
+    .action(async (opts) => {
+      const provider = opts.provider as Provider;
+      const store = credentialStores[provider];
+      if (!store) {
+        console.error(`Unknown provider: ${provider}`);
+        process.exit(1);
+      }
+      const showApiKey = createShowApiKeyUseCase(store);
       try {
         const masked = await showApiKey();
-        console.log(masked);
+        const src = store.source?.();
+        const suffix = src ? ` (${src})` : '';
+        console.log(`${masked}${suffix}`);
       } catch (err) {
         console.error(err instanceof Error ? err.message : String(err));
         process.exit(1);
@@ -48,12 +79,23 @@ export function registerConfigCommand(
 
   config
     .command('remove-key')
-    .description('Remove API key from Keychain')
-    .action(async () => {
-      const removeApiKey = createRemoveApiKeyUseCase(credentialStore);
+    .description('Remove API key from system keychain')
+    .option(
+      '--provider <provider>',
+      'Provider: anthropic, openai, or openrouter',
+      'anthropic',
+    )
+    .action(async (opts) => {
+      const provider = opts.provider as Provider;
+      const store = credentialStores[provider];
+      if (!store) {
+        console.error(`Unknown provider: ${provider}`);
+        process.exit(1);
+      }
+      const removeApiKey = createRemoveApiKeyUseCase(store);
       try {
         await removeApiKey();
-        console.log('API key removed.');
+        console.log(`API key removed for ${provider}.`);
       } catch (err) {
         console.error(err instanceof Error ? err.message : String(err));
         process.exit(1);

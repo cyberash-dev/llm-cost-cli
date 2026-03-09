@@ -2,10 +2,11 @@ import type { Command } from 'commander';
 import type { CostPresenter } from '../../application/ports/cost-presenter.port.js';
 import { createGetCostReportUseCase } from '../../application/use-cases/get-cost-report.use-case.js';
 import type { CostRepository } from '../../domain/cost-repository.port.js';
+import type { ProviderOption } from '../../domain/entities.js';
 
 export function registerCostCommand(
   program: Command,
-  costRepository: CostRepository,
+  getCostRepository: (provider: ProviderOption) => CostRepository,
   getCostPresenter: (json: boolean) => CostPresenter,
 ): void {
   program
@@ -18,20 +19,41 @@ export function registerCostCommand(
       '--group-by <fields>',
       'Group by workspace_id, description (comma-separated)',
     )
+    .option(
+      '--provider <provider>',
+      'Provider: anthropic, openai, openrouter, or all',
+      'anthropic',
+    )
     .option('--json', 'Output as JSON')
     .option('--sum', 'Output total sum only')
     .action(async (opts) => {
+      const providerOption = opts.provider as ProviderOption;
+      if (
+        providerOption !== 'anthropic' &&
+        providerOption !== 'openai' &&
+        providerOption !== 'openrouter' &&
+        providerOption !== 'all'
+      ) {
+        console.error(`Unknown provider: ${providerOption}`);
+        process.exit(1);
+      }
+
+      const costRepository = getCostRepository(providerOption);
       const costPresenter = getCostPresenter(Boolean(opts.json));
-      const getCost = createGetCostReportUseCase(costRepository, costPresenter);
+      const getCostReport = createGetCostReportUseCase(
+        costRepository,
+        costPresenter,
+      );
+      const groupBy = opts.groupBy
+        ? (opts.groupBy as string).split(',').map((s: string) => s.trim())
+        : ['description'];
+
       try {
-        const groupBy = opts.groupBy
-          ? (opts.groupBy as string).split(',').map((s: string) => s.trim())
-          : ['description'];
-        await getCost({
+        await getCostReport({
           from: opts.from,
           to: opts.to,
           period: opts.period,
-          groupBy: groupBy as ('workspace_id' | 'description')[] | undefined,
+          groupBy,
           sumOnly: Boolean(opts.sum),
         });
       } catch (err) {

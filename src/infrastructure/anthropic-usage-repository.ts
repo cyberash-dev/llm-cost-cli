@@ -40,6 +40,7 @@ function mapToUsageRecord(
     (cacheCreation.ephemeral_1h_input_tokens ?? 0) +
     (cacheCreation.ephemeral_5m_input_tokens ?? 0);
   return {
+    provider: 'anthropic',
     date: bucket.starting_at,
     model: result.model ?? null,
     uncachedInputTokens: result.uncached_input_tokens,

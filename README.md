@@ -1,32 +1,33 @@
-# claude-cost-cli
+# llm-cost-cli
 
-CLI for Claude API usage and cost reports. Uses the Anthropic Admin API ([Usage & Cost API](https://platform.claude.com/docs/en/build-with-claude/usage-cost-api)).
+Multi-provider CLI for LLM API usage and cost reports. Supports Anthropic, OpenAI, and OpenRouter.
 
 ## Requirements
 
 - Node.js 18+
-- macOS (uses Keychain for credential storage)
 
 ## Install
 
 ```bash
-npm install -g claude-cost-cli
+npm install -g llm-cost-cli
 ```
 
 Or run without installing:
 
 ```bash
-npx claude-cost-cli
+npx llm-cost-cli
 ```
 
 ## Commands
 
 ### config set-key
 
-Store your Admin API key in macOS Keychain. Requires an Admin API key (starts with `sk-ant-admin`) from Claude Console → Settings → Admin Keys.
+Store your API key in the system keychain. Requires a provider admin API key.
 
 ```bash
-claude-cost config set-key
+llm-cost config set-key                        # Default: anthropic
+llm-cost config set-key --provider openai
+llm-cost config set-key --provider openrouter
 ```
 
 ### config show
@@ -34,15 +35,17 @@ claude-cost config set-key
 Display masked API key.
 
 ```bash
-claude-cost config show
+llm-cost config show
+llm-cost config show --provider openai
 ```
 
 ### config remove-key
 
-Remove API key from Keychain.
+Remove API key from keychain.
 
 ```bash
-claude-cost config remove-key
+llm-cost config remove-key
+llm-cost config remove-key --provider openrouter
 ```
 
 ### usage
@@ -50,23 +53,34 @@ claude-cost config remove-key
 Retrieve usage report with token counts.
 
 ```bash
-claude-cost usage
-claude-cost usage --period 30d --model claude-opus-4
-claude-cost usage --from 2025-01-01 --to 2025-01-31 --json
-claude-cost usage --api-keys apikey_xxx --group-by model,api_key_id
+llm-cost usage
+llm-cost usage --provider openai --period 30d
+llm-cost usage --provider all --from 2026-01-01 --to 2026-01-31 --json
+llm-cost usage --model claude-opus-4 --group-by model,api_key_id
 ```
 
-Options: `--from`, `--to`, `--period` (7d/30d/90d), `--model`, `--api-keys`, `--group-by`, `--bucket` (1d/1h/1m), `--json`
+Options: `--provider` (anthropic/openai/openrouter/all), `--from`, `--to`, `--period` (7d/30d/90d), `--model`, `--api-keys`, `--group-by`, `--bucket` (1d/1h/1m), `--json`
 
 ### cost
 
 Retrieve cost report in USD.
 
 ```bash
-claude-cost cost
-claude-cost cost --period 30d --group-by workspace_id,description
-claude-cost cost --sum
-claude-cost cost --json
+llm-cost cost
+llm-cost cost --provider openai --period 30d
+llm-cost cost --provider all --sum
+llm-cost cost --json
 ```
 
-Options: `--from`, `--to`, `--period`, `--group-by`, `--sum` (output total only), `--json`
+Options: `--provider` (anthropic/openai/openrouter/all), `--from`, `--to`, `--period`, `--group-by`, `--sum` (output total only), `--json`
+
+## Security and Data Storage
+
+The following properties are by design and can be verified in the source code:
+
+- **API keys**: stored in the system keychain via [cross-keychain](https://github.com/nicolo-ribaudo/cross-keychain) (macOS Keychain, Windows Credential Manager, Linux Secret Service). Never written to disk in plaintext. See [`src/infrastructure/keychain-credential-store.ts`](https://github.com/cyberash-dev/llm-cost-cli/blob/main/src/infrastructure/keychain-credential-store.ts).
+- **Env fallback**: keys can also be provided via `LLM_COST_ANTHROPIC_API_KEY`, `LLM_COST_OPENAI_API_KEY`, or `LLM_COST_OPENROUTER_API_KEY` environment variables.
+- **No config files**: all settings are passed via CLI flags. Nothing is stored on disk besides the keychain entries.
+- **Network**: API keys are only sent to their respective provider endpoints over HTTPS (`api.anthropic.com`, `api.openai.com`, `openrouter.ai`). No other outbound connections are made.
+- **Scope**: admin API keys grant read-only access to organization usage and cost data.
+- **No caching**: query results are not cached or persisted to disk. The CLI writes output to stdout only.

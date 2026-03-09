@@ -7,7 +7,7 @@
 ## CLI-команда
 
 ```bash
-claude-cost config show
+llm-cost config show [--provider <provider>]
 ```
 
 ## Расположение
@@ -17,37 +17,46 @@ claude-cost config show
 
 ## Входные параметры
 
-Нет.
+| Параметр | Тип | Источник | Описание |
+|----------|-----|----------|----------|
+| `provider` | `Provider` | `--provider` flag (default: `anthropic`) | Провайдер |
 
 ## Зависимости (порты)
 
 | Порт | Описание |
 |------|----------|
-| `CredentialStore` | Загрузка credential из хранилища |
+| `CredentialStore` | Загрузка credential из хранилища (выбирается по provider) |
 
 ## Алгоритм
 
 ```
-1. credentialStore.load() → key
-   └── KeychainCredentialStore:
-       security find-generic-password -a claude-cost-cli -s claude-cost-cli -w
-2. maskApiKey(key) → masked
+1. Определить provider из --provider флага
+2. Выбрать CredentialStore для данного provider (CompositeCredentialStore)
+3. credentialStore.load() → key
+   └── CompositeCredentialStore пробует:
+       a. KeychainCredentialStore → getPassword(service, account) via cross-keychain
+       b. EnvCredentialStore → process.env[LLM_COST_<PROVIDER>_API_KEY]
+4. maskApiKey(key) → masked
    - Если длина <= 19: "***"
    - Иначе: первые 15 символов + "..." + последние 4 символа
-3. Вывод masked в stdout
+5. credentialStore.source() → источник ('keychain' | 'env' | null)
+6. Вывод: masked + " (source)" в stdout
+   - keychain: "sk-ant-admin01R...xY9z (keychain)"
+   - env: "sk-ant-admin01R...xY9z (env: LLM_COST_ANTHROPIC_API_KEY)"
 ```
 
 ## Выходные данные
 
-Маскированный ключ, например:
+Маскированный ключ с указанием источника:
 
 ```
-sk-ant-admin01R...xY9z
+sk-ant-admin01R...xY9z (keychain)
+sk-ant-admin01R...xY9z (env: LLM_COST_ANTHROPIC_API_KEY)
 ```
 
 ## Ошибки
 
 | Ситуация | Сообщение |
 |----------|-----------|
-| Ключ не сохранён | `No API key stored. Run: claude-cost config set-key` |
-| Ошибка Keychain | `Failed to retrieve credential from Keychain: <details>` |
+| Ключ не сохранён (ни keychain, ни env) | `No API key stored for <provider>. Run: llm-cost config set-key --provider <provider>, or set LLM_COST_<PROVIDER>_API_KEY` |
+| Ошибка keychain | Ошибка из cross-keychain |

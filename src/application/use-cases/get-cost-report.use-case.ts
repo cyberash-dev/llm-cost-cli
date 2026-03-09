@@ -7,7 +7,7 @@ type GetCostReportParams = {
   period?: string;
   from?: string;
   to?: string;
-  groupBy?: ('workspace_id' | 'description')[];
+  groupBy?: string[];
   sumOnly?: boolean;
 };
 

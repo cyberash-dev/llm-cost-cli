@@ -12,6 +12,7 @@
 
 ```typescript
 type UsageRecord = {
+  provider: Provider
   date: string
   model: string | null
   uncachedInputTokens: number
@@ -29,23 +30,23 @@ type UsageRecord = {
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `date` | `string` | ISO 8601 дата начала bucket (`starting_at` из API) |
-| `model` | `string \| null` | Идентификатор модели (например `claude-sonnet-4`) |
+| `provider` | `Provider` | Провайдер (`'anthropic'` или `'openai'`) |
+| `date` | `string` | ISO 8601 дата начала bucket |
+| `model` | `string \| null` | Идентификатор модели |
 | `uncachedInputTokens` | `number` | Количество некэшированных входных токенов |
 | `cachedInputTokens` | `number` | Количество прочитанных из кэша входных токенов |
-| `cacheCreationTokens` | `number` | Количество токенов, потраченных на создание кэша (сумма `ephemeral_1h` + `ephemeral_5m`) |
+| `cacheCreationTokens` | `number` | Количество токенов на создание кэша |
 | `outputTokens` | `number` | Количество выходных токенов |
-| `webSearchRequests` | `number` | Количество запросов web search (server tool use) |
-| `apiKeyId` | `string \| null` | ID API-ключа (при группировке по `api_key_id`) |
-| `workspaceId` | `string \| null` | ID workspace (при группировке по `workspace_id`) |
-| `serviceTier` | `string \| null` | Service tier (при группировке по `service_tier`) |
+| `webSearchRequests` | `number` | Количество запросов web search |
+| `apiKeyId` | `string \| null` | ID API-ключа |
+| `workspaceId` | `string \| null` | ID workspace / project |
+| `serviceTier` | `string \| null` | Service tier |
 
-## Маппинг из API
-
-Создаётся из `RawUsageBucket` + `RawUsageResult` (ответ Anthropic API):
+## Маппинг из Anthropic API
 
 | UsageRecord | API Response |
 |-------------|-------------|
+| `provider` | `'anthropic'` (hardcoded) |
 | `date` | `bucket.starting_at` |
 | `model` | `result.model` |
 | `uncachedInputTokens` | `result.uncached_input_tokens` |
@@ -56,6 +57,22 @@ type UsageRecord = {
 | `apiKeyId` | `result.api_key_id` |
 | `workspaceId` | `result.workspace_id` |
 | `serviceTier` | `result.service_tier` |
+
+## Маппинг из OpenAI API
+
+| UsageRecord | API Response |
+|-------------|-------------|
+| `provider` | `'openai'` (hardcoded) |
+| `date` | `new Date(bucket.start_time * 1000).toISOString()` |
+| `model` | `result.model` |
+| `uncachedInputTokens` | `result.input_tokens - result.input_cached_tokens` |
+| `cachedInputTokens` | `result.input_cached_tokens` |
+| `cacheCreationTokens` | `0` (не поддерживается) |
+| `outputTokens` | `result.output_tokens` |
+| `webSearchRequests` | `0` (не поддерживается) |
+| `apiKeyId` | `null` |
+| `workspaceId` | `result.project_id` |
+| `serviceTier` | `null` |
 
 ## Отображение
 

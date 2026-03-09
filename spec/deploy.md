@@ -70,7 +70,7 @@ graph LR
 
 Проверить содержимое перед установкой:
 ```bash
-npm pack claude-cost-cli --dry-run
+npm pack llm-cost-cli --dry-run
 ```
 
 ### Что публикуется
@@ -83,10 +83,10 @@ npm pack claude-cost-cli --dry-run
 ## Установка
 
 ```bash
-npm install -g claude-cost-cli
+npm install -g llm-cost-cli
 ```
 
-После установки доступна команда `claude-cost`.
+После установки доступна команда `llm-cost`.
 
 Установка из исходников:
 ```bash
@@ -98,6 +98,6 @@ npm install && npm run build && npm link
 ## Release Checklist
 
 1. Обновить `version` в `package.json`
-2. Создать GitHub Release с тегом (например `v0.1.3`)
+2. Создать GitHub Release с тегом (например `v0.2.0`)
 3. Publish workflow запускается автоматически
-4. Проверить пакет на npm: `npm info claude-cost-cli`
+4. Проверить пакет на npm: `npm info llm-cost-cli`

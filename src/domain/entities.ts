@@ -1,9 +1,13 @@
+export type Provider = 'anthropic' | 'openai' | 'openrouter';
+export type ProviderOption = Provider | 'all';
+
 export type DateRange = {
   startingAt: string;
   endingAt: string;
 };
 
 export type UsageRecord = {
+  provider: Provider;
   date: string;
   model: string | null;
   uncachedInputTokens: number;
@@ -17,6 +21,7 @@ export type UsageRecord = {
 };
 
 export type CostRecord = {
+  provider: Provider;
   date: string;
   description: string | null;
   model: string | null;
@@ -37,5 +42,5 @@ export type UsageReportQuery = {
 
 export type CostReportQuery = {
   dateRange: DateRange;
-  groupBy?: ('workspace_id' | 'description')[];
+  groupBy?: string[];
 };

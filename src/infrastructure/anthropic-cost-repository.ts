@@ -34,6 +34,7 @@ function mapToCostRecord(
   const amountCents = parseFloat(result.amount);
   const amountDollars = Number.isNaN(amountCents) ? 0 : amountCents / 100;
   return {
+    provider: 'anthropic',
     date: bucket.starting_at,
     description: result.description ?? null,
     model: result.model ?? null,

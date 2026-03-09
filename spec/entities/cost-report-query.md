@@ -13,7 +13,7 @@
 ```typescript
 type CostReportQuery = {
   dateRange: DateRange
-  groupBy?: ('workspace_id' | 'description')[]
+  groupBy?: string[]
 }
 ```
 
@@ -22,9 +22,11 @@ type CostReportQuery = {
 | Поле | Тип | Default | Описание |
 |------|-----|---------|----------|
 | `dateRange` | `DateRange` | last 7 days | Временной диапазон выборки |
-| `groupBy` | `('workspace_id' \| 'description')[]` | `['description']` | Группировка результатов |
+| `groupBy` | `string[]` | `['description']` | Группировка результатов |
 
 ## Маппинг в API query parameters
+
+### Anthropic
 
 | Query field | API parameter | Формат |
 |-------------|---------------|--------|
@@ -32,6 +34,15 @@ type CostReportQuery = {
 | `dateRange.endingAt` | `ending_at` | ISO 8601 |
 | (hardcoded) | `bucket_width` | всегда `1d` |
 | `groupBy` | `group_by[]` | повторяющийся параметр |
+
+### OpenAI
+
+| Query field | API parameter | Формат |
+|-------------|---------------|--------|
+| `dateRange.startingAt` | `start_time` | unix seconds |
+| `dateRange.endingAt` | `end_time` | unix seconds |
+| (hardcoded) | `bucket_width` | всегда `1d` |
+| `groupBy` | игнорируется | — |
 
 ## CLI-флаги → Query
 
@@ -43,5 +54,5 @@ type CostReportQuery = {
 ## Отличия от UsageReportQuery
 
 - Нет фильтрации по моделям и API-ключам
-- `groupBy` ограничен значениями `workspace_id` и `description`
+- `groupBy` принимает `string[]` — адаптеры игнорируют неподдерживаемые значения
 - `bucketWidth` всегда `1d` (зашито в repository)

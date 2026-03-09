@@ -1,11 +1,11 @@
 {
-  "name": "claude-cost-cli",
-  "version": "0.1.2",
+  "name": "llm-cost-cli",
+  "version": "0.2.0",
   "type": "module",
-  "description": "CLI for Claude API usage and cost reports",
+  "description": "CLI for LLM API usage and cost reports (Anthropic, OpenAI)",
   "main": "dist/index.mjs",
   "bin": {
-    "claude-cost": "./dist/index.mjs"
+    "llm-cost": "./dist/index.mjs"
   },
   "files": [
     "dist",
@@ -21,8 +21,10 @@
     "check": "biome check --write"
   },
   "keywords": [
+    "llm",
     "claude",
     "anthropic",
+    "openai",
     "usage",
     "cost",
     "cli",
@@ -31,12 +33,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cyberash-dev/claude-cost-cli.git"
+    "url": "https://github.com/cyberash-dev/llm-cost-cli.git"
   },
   "bugs": {
-    "url": "https://github.com/cyberash-dev/claude-cost-cli/issues"
+    "url": "https://github.com/cyberash-dev/llm-cost-cli/issues"
   },
-  "homepage": "https://github.com/cyberash-dev/claude-cost-cli#readme",
+  "homepage": "https://github.com/cyberash-dev/llm-cost-cli#readme",
   "engines": {
     "node": ">=18"
   },
@@ -44,7 +46,8 @@
     "@inquirer/prompts": "8.2.0",
     "chalk": "5.6.2",
     "cli-table3": "0.6.5",
-    "commander": "14.0.3"
+    "commander": "14.0.3",
+    "cross-keychain": "1.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.14",

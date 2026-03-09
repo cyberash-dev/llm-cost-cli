@@ -1,6 +1,10 @@
-import type { DateRange } from '../domain/entities.js';
+import type { DateRange, Provider } from '../domain/entities.js';
 
-const ADMIN_KEY_PREFIX = 'sk-ant-admin';
+const ADMIN_KEY_PREFIXES: Record<Provider, string[]> = {
+  anthropic: ['sk-ant-admin'],
+  openai: ['sk-admin-', 'sk-proj-', 'sk-svcacct-'],
+  openrouter: ['sk-or-'],
+};
 
 export function parseDateRange(
   period?: string,
@@ -38,8 +42,11 @@ function parsePeriod(period: string): number {
   return Number.isNaN(value) ? 7 : value;
 }
 
-export function isValidAdminKey(key: string): boolean {
-  return key.startsWith(ADMIN_KEY_PREFIX);
+export function isValidAdminKeyForProvider(
+  key: string,
+  provider: Provider,
+): boolean {
+  return ADMIN_KEY_PREFIXES[provider].some((prefix) => key.startsWith(prefix));
 }
 
 export function maskApiKey(key: string): string {
