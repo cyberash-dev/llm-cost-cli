@@ -1,6 +1,6 @@
 {
   "name": "llm-cost-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "CLI for LLM API usage and cost reports (Anthropic, OpenAI)",
   "main": "dist/index.mjs",
