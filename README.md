@@ -1,3 +1,5 @@
+![llm-cost-cli banner](./assets/banner.png)
+
 # llm-cost-cli
 
 Multi-provider CLI for LLM API usage and cost reports. Supports Anthropic, OpenAI, and OpenRouter.
