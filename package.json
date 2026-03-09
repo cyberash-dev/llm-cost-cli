@@ -5,7 +5,7 @@
   "description": "CLI for LLM API usage and cost reports (Anthropic, OpenAI)",
   "main": "dist/index.mjs",
   "bin": {
-    "llm-cost": "./dist/index.mjs"
+    "llm-cost": "dist/index.mjs"
   },
   "files": [
     "dist",
@@ -33,7 +33,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cyberash-dev/llm-cost-cli.git"
+    "url": "git+https://github.com/cyberash-dev/llm-cost-cli.git"
   },
   "bugs": {
     "url": "https://github.com/cyberash-dev/llm-cost-cli/issues"
